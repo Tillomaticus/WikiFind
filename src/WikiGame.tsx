@@ -1,11 +1,23 @@
 import React, { useState, useEffect } from 'react';
 
-// Define the type for the API response (article data)
+// Define the types for the API response (article data)
+type WikipediaPage = {
+    title: string;
+    extract: string;
+};
+
+type WikipediaArticleData = {
+    query: {
+        random: { id: number; title: string }[]; 
+        pages: Record<string, WikipediaPage>;
+    };
+};
+
 type WikipediaArticle = {
     title: string;
     extract: string;
     url: string;
-    links: string[]; // Add an array to hold the links from the article
+    links: string[]; 
 };
 
 const WikiGame: React.FC = () => {
@@ -20,17 +32,27 @@ const WikiGame: React.FC = () => {
             console.log("Yo");
             try {
                 console.log('Fetching random article...');
-
-                // Fetch the random article using the serverless function on Vercel
-                const response = await fetch('/api/fetchArticle?pageId=28171087');  // Replace with dynamic pageId if needed
-                const data = await response.json();
+                const response = await fetch('/api/fetchArticle'); // Calling the serverless function (assuming dynamic pageId handled in serverless function)
+                const data: WikipediaArticleData = await response.json();
                 console.log('Article data:', data);
 
+                const pageId = data.query.random[0].id.toString(); // Ensure pageId is a string
+                const page = data.query.pages[pageId];
+
+                if (!page) {
+                    throw new Error('Page not found');
+                }
+
+                const pageTitle = page.title;
+                const pageExtract = page.extract;
+
+                const links: string[] = [];
+
                 setRandomArticle({
-                    title: 'Example Title',  // You can set a dynamic title based on data if needed
-                    extract: data.extract,
-                    url: `https://en.wikipedia.org/wiki/Example_Title`,  // Set a dynamic URL
-                    links: data.links,
+                    title: pageTitle,
+                    extract: pageExtract,
+                    url: `https://en.wikipedia.org/wiki/${pageTitle.replace(/ /g, '_')}`,
+                    links: links,
                 });
             } catch (error) {
                 console.error('Error fetching random article:', error);
@@ -40,7 +62,6 @@ const WikiGame: React.FC = () => {
         fetchRandomArticle();
 
     }, [gameStarted]);
-
 
     // Handle clicking on a link to go to the next article
     const handleLinkClick = (linkTitle: string) => {
