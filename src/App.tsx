@@ -1,12 +1,9 @@
 // App.tsx
 
-import { useState } from 'react';
 import './App.css';
 import WikiGame from './WikiGame'; 
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
     <div className="App">
     <h1 className="text-3xl font-bold p-6">Wikipedia Navigation Game</h1>
