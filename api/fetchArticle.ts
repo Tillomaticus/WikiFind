@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { pageId } = req.query; // Get the pageId from the query parameters
+  const { pageId } = req.query;
   
   if (!pageId) {
     return res.status(400).json({ error: "Missing pageId parameter" });
@@ -14,11 +14,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     );
     const articleData = await articleResponse.json();
 
-    if (!articleData.query.pages[pageId]) {
+    if (!articleData.query.pages[pageId as string]) {
       return res.status(404).json({ error: "Article not found" });
     }
 
-    const pageExtract = articleData.query.pages[pageId].extract;
+    const pageExtract = articleData.query.pages[pageId as string].extract;
 
     // Fetch links from the article
     const linksResponse = await fetch(
@@ -28,7 +28,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const links = linksData.parse.links.map((link: { title: string }) => link.title);
 
-    // Send response back to client with article data
     res.status(200).json({
       extract: pageExtract,
       links: links,
