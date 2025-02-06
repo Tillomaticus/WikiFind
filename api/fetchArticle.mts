@@ -9,6 +9,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Fetch article data using Wikipedia API
+
+    console.log(pageId);
     const articleResponse = await fetch(
       `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro&explaintext&pageids=${pageId}`
     );
