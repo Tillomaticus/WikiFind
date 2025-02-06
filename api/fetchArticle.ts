@@ -1,38 +1,44 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import fetch from 'node-fetch'; // Ensure you have installed `node-fetch`
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { pageId } = req.query;
+export default async function handler(req, res) {
+  const { pageId } = req.query; // Get the pageId from the query string
 
   if (!pageId) {
-    return res.status(400).json({ error: "Missing pageId parameter" });
+    return res.status(400).json({ error: 'Missing pageId parameter' });
   }
 
   try {
-    const articleResponse = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro&explaintext&pageids=${pageId}`
-    );
-    const articleData = await articleResponse.json();
+    // Make the request to Wikipedia's API to get the article by pageId
+    const wikipediaApiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&pageids=${pageId}`;
+    const response = await fetch(wikipediaApiUrl);
 
-    if (!articleData.query.pages[pageId as string]) {
-      return res.status(404).json({ error: "Article not found" });
+    // If Wikipedia's API responds with an error, handle it
+    const data = await response.json();
+    if (data.error) {
+      return res.status(500).json({ error: data.error.info });
     }
 
-    const pageExtract = articleData.query.pages[pageId as string].extract;
+    // Parse and return the necessary data from Wikipedia API response
+    const page = data.query.pages[pageId];
 
-    // Fetch links from the article
-    const linksResponse = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=parse&format=json&prop=links&pageid=${pageId}`
-    );
-    const linksData = await linksResponse.json();
+    if (!page) {
+      return res.status(404).json({ error: 'Page not found' });
+    }
 
-    const links = linksData.parse.links.map((link: { title: string }) => link.title);
+    const pageTitle = page.title;
+    const pageExtract = page.extract;
 
+    const links = page.links || [];
+
+    // Send the extracted data to the client
     res.status(200).json({
+      title: pageTitle,
       extract: pageExtract,
+      url: `https://en.wikipedia.org/wiki/${pageTitle.replace(/ /g, '_')}`,
       links: links,
     });
   } catch (error) {
-    console.error('Error fetching article:', error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error('Error fetching from Wikipedia:', error);
+    res.status(500).json({ error: 'Error fetching article from Wikipedia' });
   }
 }
