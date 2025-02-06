@@ -29,10 +29,9 @@ const WikiGame: React.FC = () => {
         if (!gameStarted) return; // Don't fetch if game hasn't started
 
         const fetchRandomArticle = async () => {
-            console.log("Yo");
             try {
                 console.log('Fetching random article...');
-                const response = await fetch('/api/fetchArticle'); // Calling the serverless function (assuming dynamic pageId handled in serverless function)
+                const response = await fetch('https://en.wikipedia.org/w/api.php?action=query&format=json&list=random&rnlimit=1');
                 const data: WikipediaArticleData = await response.json();
                 console.log('Article data:', data);
 
