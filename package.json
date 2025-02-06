@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/node": "^22.13.1",
+    "@vercel/node": "^5.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
