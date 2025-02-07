@@ -3,7 +3,7 @@ import './WikiGame.css';
 
 type WikipediaArticle = {
     title: string;
-    extract: string;
+    content: string;
     url: string;
     links: string[];
 };
@@ -30,9 +30,11 @@ const WikiGame: React.FC = () => {
                     throw new Error('Invalid API response: Missing random article');
                 }
 
+            const parsedContent = await fetchContentFromWikipedia(data.title);
+
                 setRandomArticle({
                     title: data.title,
-                    extract: data.extract || 'No summary available.',
+                    content: parsedContent,
                     url: data.url,
                     links: data.links || [],
                 });
@@ -42,10 +44,25 @@ const WikiGame: React.FC = () => {
             } catch (error) {
                 console.error('Error fetching random article:', error);
             }
+
         };
 
         fetchRandomArticle();
     }, [gameStarted]);
+
+
+    const fetchContentFromWikipedia = async (articleTitle: string) => {
+        try {
+            const response = await fetch(`https://en.wikipedia.org/w/api.php?action=parse&page=${articleTitle}&prop=text&format=json`);
+            const data = await response.json();
+
+            // Return the HTML content from the 'parse' API response
+            return data.parse.text['*'] || '';
+        } catch (error) {
+            console.error('Error fetching full article content:', error);
+            return 'Error loading content';
+        }
+    };
 
     // Handle clicking on a link to go to the next article
     const handleLinkClick = (linkTitle: string) => {
@@ -89,7 +106,10 @@ const WikiGame: React.FC = () => {
                         {randomArticle ? (
                             <div>
                                 <h2 className="text-xl font-bold">{randomArticle.title}</h2>
-                                <p>{randomArticle.extract}</p>
+                                <div
+                                    className="article-content"
+                                    dangerouslySetInnerHTML={{ __html: randomArticle.content }} // Render parsed HTML
+                                />
                                 <a
                                     href={randomArticle.url}
                                     target="_blank"
