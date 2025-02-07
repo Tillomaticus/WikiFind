@@ -1,0 +1,41 @@
+/* WikiGame.css */
+
+/* Container for game layout */
+.game-container {
+    display: flex;
+    justify-content: space-between;  /* Space out the sidebar and main content */
+    margin: 20px;
+}
+
+/* Sidebar styling */
+.sidebar {
+    width: 25%;  /* Sidebar takes up 25% of the container */
+    background-color: #f4f4f4;
+    padding: 15px;
+    border-radius: 8px;
+    position: sticky;
+    top: 0;  /* Keeps the sidebar fixed while scrolling */
+}
+
+/* Main content styling */
+.main-content {
+    width: 70%;  /* Main content takes up the remaining 70% */
+    margin-left: 20px;
+}
+
+/* Button styling */
+.bg-blue-500 {
+    background-color: #3498db;
+}
+
+.text-white {
+    color: white;
+}
+
+.px-4, .py-2 {
+    padding: 10px;
+}
+
+.rounded {
+    border-radius: 5px;
+}
