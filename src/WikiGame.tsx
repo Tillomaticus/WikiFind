@@ -53,14 +53,35 @@ const WikiGame: React.FC = () => {
 
     const fetchContentFromWikipedia = async (articleTitle: string) => {
         try {
-            const response = await fetch(`https://en.wikipedia.org/w/api.php?action=parse&page=${articleTitle}&prop=text&format=json`);
-            const data = await response.json();
-
-            // Return the HTML content from the 'parse' API response
-            return data.parse.text['*'] || '';
+            const response = await fetch(`/api/fetchArticleContent?title=${encodeURIComponent(articleTitle)}`);
+            const rawHtml = await response.text(); // Get raw HTML response
+    
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(rawHtml, "text/html");
+    
+            // Wikipedia content is wrapped inside a <div> with class "mw-parser-output"
+            const contentDiv = doc.querySelector(".mw-parser-output");
+    
+            if (!contentDiv) {
+                throw new Error("Failed to extract article content");
+            }
+    
+            // Remove unnecessary elements
+            contentDiv.querySelectorAll(".hatnote, .mw-editsection, .reference, .infobox, .navbox, .toc, .vertical-navbox").forEach(el => el.remove());
+    
+            // Convert relative Wikipedia links to absolute
+            contentDiv.querySelectorAll("a").forEach(a => {
+                const href = a.getAttribute("href");
+                if (href && href.startsWith("/wiki/")) {
+                    a.setAttribute("href", `https://en.wikipedia.org${href}`);
+                    a.setAttribute("target", "_blank"); // Open in a new tab
+                }
+            });
+    
+            return contentDiv.innerHTML; // Return the cleaned HTML
         } catch (error) {
-            console.error('Error fetching full article content:', error);
-            return 'Error loading content';
+            console.error("Error fetching full article content:", error);
+            return "<p>Error loading content</p>";
         }
     };
 
