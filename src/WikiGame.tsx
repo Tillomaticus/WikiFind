@@ -128,12 +128,23 @@ const WikiGame: React.FC = () => {
                 links: data.links || [],
             });
 
-
+            if (goalArticle) {
+                const normalizedArticleTitle = articleTitle.replace(/_/g, ' ');
+                const normalizedGoalTitle = goalArticle.replace(/_/g, ' ');
+                if (normalizedArticleTitle === normalizedGoalTitle) {
+                    setPoints((prevPoints) => prevPoints + 10);
+                    setArticle({
+                        title: "Congratulations",
+                        content: "<p>You made it!</p>", // Show loading text
+                        infobox: "",
+                        url: "",
+                        links: [],
+                    });
+                }
+            }
             // Update state
             setSteps((prevSteps) => prevSteps + 1);
-            if (articleTitle === goalArticle) {
-                setPoints((prevPoints) => prevPoints + 10);
-            }
+          
         } catch (error) {
             console.error("Failed to load article:", error);
         }
