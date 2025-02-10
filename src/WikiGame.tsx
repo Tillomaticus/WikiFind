@@ -11,13 +11,12 @@ type WikipediaArticle = {
 
 
 const WikiGame: React.FC = () => {
-    const [randomArticle, setRandomArticle] = useState<WikipediaArticle | null>(null);
+    const [displayArticle, setArticle] = useState<WikipediaArticle | null>(null);
     const [gameStarted, setGameStarted] = useState<boolean>(false);
     const [steps, setSteps] = useState(0);
     const [points, setPoints] = useState(0);
     const [goalArticle, setGoalArticle] = useState<string | null>(null);
-    const [articleContent, setArticleContent] = useState<string>("");
-    const [infoboxContent, setInfoboxContent] = useState<string>("");
+    const [goalUrl, setGoalUrl] = useState<string | null>(null);
 
     // Fetch random article and links
     useEffect(() => {
@@ -25,8 +24,18 @@ const WikiGame: React.FC = () => {
 
         const fetchRandomArticle = async () => {
             try {
-                const response = await fetch('/api/fetchArticle');
-                const data: WikipediaArticle = await response.json();
+
+                //Goal Article
+                let response = await fetch('/api/fetchRandomArticle');
+                let data: WikipediaArticle = await response.json();
+
+                // Set a random goal article when the game starts 
+                setGoalArticle(data.title);
+                setGoalUrl(data.url);
+
+
+                response = await fetch('/api/fetchRandomArticle');
+                data = await response.json();
 
                 if (!data || !data.title) {
                     throw new Error('Invalid API response: Missing random article');
@@ -36,7 +45,7 @@ const WikiGame: React.FC = () => {
 
 
 
-                setRandomArticle({
+                setArticle({
                     title: data.title,
                     content: parsedContent.content,
                     infobox: parsedContent.infobox,
@@ -44,8 +53,7 @@ const WikiGame: React.FC = () => {
                     links: data.links || [],
                 });
 
-                // Set a random goal article when the game starts //TODO need to move this to only game start
-                setGoalArticle(data.title);
+
             } catch (error) {
                 console.error('Error fetching random article:', error);
             }
@@ -65,41 +73,77 @@ const WikiGame: React.FC = () => {
             const contentDiv = data.content; // Use the content directly from the response
             const infoboxHtml = data.infobox || ""; // Get the infobox HTML (it is already extracted in the backend)
 
-            // Update state with the raw content and infobox HTML
-            setArticleContent(contentDiv); // Set the article content as it is
-            setInfoboxContent(infoboxHtml); // Set the infobox HTML
-
             return {
                 content: contentDiv,
                 infobox: infoboxHtml
             };
         } catch (error) {
             console.error("Error fetching full article content:", error);
-            setArticleContent("<p>Error loading content</p>");
-            setInfoboxContent("");
         }
     };
 
 
     // Handle clicking on a link to go to the next article
-    const handleLinkClick = (linkTitle: string) => {
-        const newUrl = `https://en.wikipedia.org/wiki/${linkTitle.replace(/ /g, '_')}`;
-        window.open(newUrl, '_blank'); // Open the link in a new tab
+    const handleLinkClick = async (event: React.MouseEvent, linkTitle?: string) => {
+        event.preventDefault(); // Stop navigation
 
-        // Increment steps
-        setSteps(steps + 1);
+        // If manually provided linkTitle (from sidebar), use that
+        if (linkTitle) {
+            await loadNewArticle(linkTitle);
+            return;
+        }
 
-        // Optionally, award points based on proximity to the goal
-        if (linkTitle === goalArticle) {
-            setPoints(points + 10);  // Example: 10 points for reaching the goal
+        // If clicked inside article content, check if it's a valid Wikipedia link
+        const target = event.target as HTMLAnchorElement;
+        if (target.tagName === "A" && target.href.includes("/wiki/")) {
+            const articleTitle = decodeURIComponent(target.href.split("/wiki/")[1]); // Extract title
+            await loadNewArticle(articleTitle);
         }
     };
 
+    const loadNewArticle = async (articleTitle: string) => {
+        try {
+
+            setArticle({
+                title: "Loading link",
+                content: "<p>Loading...</p>", // Show loading text
+                infobox: "",
+                url: "",
+                links: [],
+            });
+    
+
+            const response = await fetch(`/api/fetchArticleContent?title=${encodeURIComponent(articleTitle)}`);
+            const data = await response.json();
+
+
+            // Fetch new content
+            const parsedContent = await fetchContentFromWikipedia(articleTitle) || { content: "", infobox: "" };
+
+            setArticle({
+                title: articleTitle,
+                content: parsedContent.content,
+                infobox: parsedContent.infobox,
+                url: data.url,
+                links: data.links || [],
+            });
+
+
+            // Update state
+            setSteps((prevSteps) => prevSteps + 1);
+            if (articleTitle === goalArticle) {
+                setPoints((prevPoints) => prevPoints + 10);
+            }
+        } catch (error) {
+            console.error("Failed to load article:", error);
+        }
+    }
+
     // Sidebar component to display game progress
-    const Sidebar: React.FC<{ steps: number, points: number, goal: string }> = ({ steps, points, goal }) => (
+    const Sidebar: React.FC<{ steps: number, points: number, goal: string, goalUrl: string }> = ({ steps, points, goal, goalUrl }) => (
         <div className="sidebar">
             <h3>Game Progress</h3>
-            <p>Goal: {goal}</p>
+            <p>Goal: <a href={goalUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{goal}</a></p>
             <p>Steps: {steps}</p>
             <p>Points: {points}</p>
         </div>
@@ -107,7 +151,7 @@ const WikiGame: React.FC = () => {
 
     return (
         <div className="game-container">
-            {gameStarted && goalArticle && <Sidebar steps={steps} points={points} goal={goalArticle} />}
+            {gameStarted && goalArticle && <Sidebar steps={steps} points={points} goal={goalArticle} goalUrl={goalUrl ?? ""} />}
             <div className="main-content">
                 {!gameStarted ? (
                     <div>
@@ -120,40 +164,45 @@ const WikiGame: React.FC = () => {
                     </div>
                 ) : (
                     <div>
-                        {randomArticle ? (
+                        {displayArticle ? (
                             <div>
-                                <h2 className="text-xl font-bold">{randomArticle.title}</h2>
+                                <h2 className="text-xl font-bold">{displayArticle.title}</h2>
                                 <div className="main-content">
+                                    {/* Handle clicks inside dynamically rendered content */}
                                     <div
                                         className="article-content"
-                                        dangerouslySetInnerHTML={{ __html: randomArticle.content }} // Render parsed HTML
+                                        dangerouslySetInnerHTML={{ __html: displayArticle.content }}
+                                        onClick={handleLinkClick} // Unified click handler
                                     />
-                                    {randomArticle.infobox && (
-                                        <div className="infobox-container">
-                                            <h3 className="text-lg font-semibold">Infobox:</h3>
-                                            <div
-                                                className="infobox-content"
-                                                dangerouslySetInnerHTML={{ __html: randomArticle.infobox }}
-                                            />
-                                        </div>
+
+                                    {displayArticle.infobox && (
+                                        <div
+                                            className="infobox-container"
+                                            dangerouslySetInnerHTML={{ __html: displayArticle.infobox }}
+                                            onClick={handleLinkClick} // Unified click handler
+                                        />
                                     )}
                                 </div>
+
+                                {/* External Wikipedia link */}
                                 <a
-                                    href={randomArticle.url}
+                                    href={displayArticle.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-500 underline"
                                 >
                                     Read more on Wikipedia
                                 </a>
+
+                                {/* Manually extracted links */}
                                 <div className="mt-4">
                                     <h3 className="text-lg font-semibold">Links:</h3>
                                     <ul>
-                                        {randomArticle.links.slice(0, 5).map((link, index) => (
+                                        {displayArticle.links.slice(0, 5).map((link, index) => (
                                             <li
                                                 key={index}
                                                 className="text-blue-500 cursor-pointer"
-                                                onClick={() => handleLinkClick(link)}
+                                                onClick={(e) => handleLinkClick(e, link)}
                                             >
                                                 {link}
                                             </li>
@@ -169,6 +218,7 @@ const WikiGame: React.FC = () => {
             </div>
         </div>
     );
+
 };
 
 export default WikiGame;
