@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './WikiGame.css';
+import { FaQuestionCircle } from 'react-icons/fa';  // Import the Font Awesome question circle icon
+
 
 type WikipediaArticle = {
     title: string;
@@ -144,7 +146,7 @@ const WikiGame: React.FC = () => {
             }
             // Update state
             setSteps((prevSteps) => prevSteps + 1);
-          
+
         } catch (error) {
             console.error("Failed to load article:", error);
         }
@@ -167,10 +169,23 @@ const WikiGame: React.FC = () => {
     }
 
     const Sidebar: React.FC<SidebarProps> = ({ steps, points, goal, goalUrl, onRestart }) => {
+        const helpUrl = `https://en.wikipedia.org/wiki/Special:WhatLinksHere/${goal.replace(/ /g, '_')}`;
+
         return (
             <div className="sidebar">
                 <h3>Game Progress</h3>
-                <p>Goal: <a href={goalUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{goal}</a></p>
+                <p>
+                    Goal:
+                    <a href={goalUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+                        {goal}
+                    </a>
+                </p>
+                <p>
+                    {/* Help Icon */}
+                    <a href={helpUrl} target="_blank" rel="noopener noreferrer">
+                        <FaQuestionCircle className="inline-block ml-80 text-blue-500 cursor-pointer" />
+                    </a>
+                </p>
                 <p>Steps: {steps}</p>
                 <p>Points: {points}</p>
 
