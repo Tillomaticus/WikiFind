@@ -111,7 +111,7 @@ const WikiGame: React.FC = () => {
                 url: "",
                 links: [],
             });
-    
+
 
             const response = await fetch(`/api/fetchArticleContent?title=${encodeURIComponent(articleTitle)}`);
             const data = await response.json();
@@ -137,21 +137,54 @@ const WikiGame: React.FC = () => {
         } catch (error) {
             console.error("Failed to load article:", error);
         }
+    };
+
+    const handleRestart = async () => {
+        setSteps(0);
+        setPoints(0);
+
+        window.location.reload();
+
+    };
+
+    interface SidebarProps {
+        steps: number;
+        points: number;
+        goal: string;
+        goalUrl: string;
+        onRestart: () => void; // Add restart function as a prop
     }
 
-    // Sidebar component to display game progress
-    const Sidebar: React.FC<{ steps: number, points: number, goal: string, goalUrl: string }> = ({ steps, points, goal, goalUrl }) => (
-        <div className="sidebar">
-            <h3>Game Progress</h3>
-            <p>Goal: <a href={goalUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{goal}</a></p>
-            <p>Steps: {steps}</p>
-            <p>Points: {points}</p>
-        </div>
-    );
+    const Sidebar: React.FC<SidebarProps> = ({ steps, points, goal, goalUrl, onRestart }) => {
+        return (
+            <div className="sidebar">
+                <h3>Game Progress</h3>
+                <p>Goal: <a href={goalUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{goal}</a></p>
+                <p>Steps: {steps}</p>
+                <p>Points: {points}</p>
+
+                {/* Restart Button */}
+                <button
+                    className="bg-red-500 text-white px-4 py-2 rounded mt-4"
+                    onClick={onRestart}
+                >
+                    Restart Game
+                </button>
+            </div>
+        );
+    };
 
     return (
         <div className="game-container">
-            {gameStarted && goalArticle && <Sidebar steps={steps} points={points} goal={goalArticle} goalUrl={goalUrl ?? ""} />}
+            {gameStarted && goalArticle && (
+                <Sidebar
+                    steps={steps}
+                    points={points}
+                    goal={goalArticle}
+                    goalUrl={goalUrl ?? ""}
+                    onRestart={handleRestart} // ✅ Pass the restart function
+                />
+            )}
             <div className="main-content">
                 {!gameStarted ? (
                     <div>
@@ -183,17 +216,6 @@ const WikiGame: React.FC = () => {
                                         />
                                     )}
                                 </div>
-
-                                {/* External Wikipedia link */}
-                                <a
-                                    href={displayArticle.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-500 underline"
-                                >
-                                    Read more on Wikipedia
-                                </a>
-
                                 {/* Manually extracted links */}
                                 <div className="mt-4">
                                     <h3 className="text-lg font-semibold">Links:</h3>
