@@ -16,6 +16,7 @@ const WikiGame: React.FC = () => {
     const [steps, setSteps] = useState(0);
     const [points, setPoints] = useState(0);
     const [goalArticle, setGoalArticle] = useState<string | null>(null);
+    const [goalUrl, setGoalUrl] = useState<string | null>(null);
     const [articleContent, setArticleContent] = useState<string>("");
     const [infoboxContent, setInfoboxContent] = useState<string>("");
 
@@ -25,8 +26,21 @@ const WikiGame: React.FC = () => {
 
         const fetchRandomArticle = async () => {
             try {
-                const response = await fetch('/api/fetchArticle');
-                const data: WikipediaArticle = await response.json();
+
+                //Goal Article
+                let response = await fetch('/api/fetchArticle');
+                let data: WikipediaArticle = await response.json();
+
+                // Set a random goal article when the game starts 
+                setGoalArticle(data.title);
+                setGoalUrl(data.url);
+
+
+                response = await fetch('/api/fetchArticle');
+                data = await response.json();
+
+
+
 
                 if (!data || !data.title) {
                     throw new Error('Invalid API response: Missing random article');
@@ -44,8 +58,7 @@ const WikiGame: React.FC = () => {
                     links: data.links || [],
                 });
 
-                // Set a random goal article when the game starts //TODO need to move this to only game start
-                setGoalArticle(data.title);
+
             } catch (error) {
                 console.error('Error fetching random article:', error);
             }
@@ -96,10 +109,10 @@ const WikiGame: React.FC = () => {
     };
 
     // Sidebar component to display game progress
-    const Sidebar: React.FC<{ steps: number, points: number, goal: string }> = ({ steps, points, goal }) => (
+    const Sidebar: React.FC<{ steps: number, points: number, goal: string, goalUrl: string }> = ({ steps, points, goal, goalUrl }) => (
         <div className="sidebar">
             <h3>Game Progress</h3>
-            <p>Goal: {goal}</p>
+            <p>Goal: <a href={goalUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{goal}</a></p>
             <p>Steps: {steps}</p>
             <p>Points: {points}</p>
         </div>
@@ -107,7 +120,7 @@ const WikiGame: React.FC = () => {
 
     return (
         <div className="game-container">
-            {gameStarted && goalArticle && <Sidebar steps={steps} points={points} goal={goalArticle} />}
+            {gameStarted && goalArticle && <Sidebar steps={steps} points={points} goal={goalArticle} goalUrl={goalUrl} />}
             <div className="main-content">
                 {!gameStarted ? (
                     <div>
