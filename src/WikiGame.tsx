@@ -215,7 +215,7 @@ const WikiGame: React.FC = () => {
                 {!gameStarted ? (
                     <div>
                         <p className="mt-4 text-gray-700 text-sm">
-                        <strong>How to play:</strong> Your goal is to navigate from the Wikipedia homepage to a random article by clicking on links. Each time you click a link, your steps increase. Reach the goal article to earn points!
+                        <strong>How to play:</strong> Your goal is to navigate from the a random Wikipedia article to another randomly selected article by clicking on links. Each time you click a link, your steps increase. Reach the goal article to earn points!
                         </p>
                         <p>
                         <strong>Hint:</strong> Click the question mark next to the goal article to see a hint which articles lead to your goal
