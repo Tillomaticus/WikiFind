@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'; // Ensure you have installed `node-fetch`
+import fetch from 'node-fetch'; 
 
 export default async function handler(req, res) {
   try {

@@ -4,16 +4,20 @@ import './WikiGame.css';
 type WikipediaArticle = {
     title: string;
     content: string;
+    infobox: string;
     url: string;
     links: string[];
 };
 
+
 const WikiGame: React.FC = () => {
     const [randomArticle, setRandomArticle] = useState<WikipediaArticle | null>(null);
     const [gameStarted, setGameStarted] = useState<boolean>(false);
-    const [steps, setSteps] = useState(0);  // Track steps
-    const [points, setPoints] = useState(0);  // Track points
-    const [goalArticle, setGoalArticle] = useState<string | null>(null);  // Goal article
+    const [steps, setSteps] = useState(0);
+    const [points, setPoints] = useState(0);
+    const [goalArticle, setGoalArticle] = useState<string | null>(null);
+    const [articleContent, setArticleContent] = useState<string>("");
+    const [infoboxContent, setInfoboxContent] = useState<string>("");
 
     // Fetch random article and links
     useEffect(() => {
@@ -21,25 +25,26 @@ const WikiGame: React.FC = () => {
 
         const fetchRandomArticle = async () => {
             try {
-                console.log('Fetching random article...');
                 const response = await fetch('/api/fetchArticle');
                 const data: WikipediaArticle = await response.json();
-                console.log('Article data:', data);
 
                 if (!data || !data.title) {
                     throw new Error('Invalid API response: Missing random article');
                 }
 
-            const parsedContent = await fetchContentFromWikipedia(data.title);
+                const parsedContent = await fetchContentFromWikipedia(data.title) || { content: "", infobox: "" };
+
+
 
                 setRandomArticle({
                     title: data.title,
-                    content: parsedContent,
+                    content: parsedContent.content,
+                    infobox: parsedContent.infobox,
                     url: data.url,
                     links: data.links || [],
                 });
 
-                // Set a random goal article when the game starts
+                // Set a random goal article when the game starts //TODO need to move this to only game start
                 setGoalArticle(data.title);
             } catch (error) {
                 console.error('Error fetching random article:', error);
@@ -54,36 +59,27 @@ const WikiGame: React.FC = () => {
     const fetchContentFromWikipedia = async (articleTitle: string) => {
         try {
             const response = await fetch(`/api/fetchArticleContent?title=${encodeURIComponent(articleTitle)}`);
-            const rawHtml = await response.text(); // Get raw HTML response
-    
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(rawHtml, "text/html");
-    
-            // Wikipedia content is wrapped inside a <div> with class "mw-parser-output"
-            const contentDiv = doc.querySelector(".mw-parser-output");
-    
-            if (!contentDiv) {
-                throw new Error("Failed to extract article content");
-            }
-    
-            // Remove unnecessary elements
-            contentDiv.querySelectorAll(".hatnote, .mw-editsection, .reference, .infobox, .navbox, .toc, .vertical-navbox").forEach(el => el.remove());
-    
-            // Convert relative Wikipedia links to absolute
-            contentDiv.querySelectorAll("a").forEach(a => {
-                const href = a.getAttribute("href");
-                if (href && href.startsWith("/wiki/")) {
-                    a.setAttribute("href", `https://en.wikipedia.org${href}`);
-                    a.setAttribute("target", "_blank"); // Open in a new tab
-                }
-            });
-    
-            return contentDiv.innerHTML; // Return the cleaned HTML
+            const data = await response.json(); // Get raw HTML response
+
+            // Since the backend already parses the content, no need to parse it again
+            const contentDiv = data.content; // Use the content directly from the response
+            const infoboxHtml = data.infobox || ""; // Get the infobox HTML (it is already extracted in the backend)
+
+            // Update state with the raw content and infobox HTML
+            setArticleContent(contentDiv); // Set the article content as it is
+            setInfoboxContent(infoboxHtml); // Set the infobox HTML
+
+            return {
+                content: contentDiv,
+                infobox: infoboxHtml
+            };
         } catch (error) {
             console.error("Error fetching full article content:", error);
-            return "<p>Error loading content</p>";
+            setArticleContent("<p>Error loading content</p>");
+            setInfoboxContent("");
         }
     };
+
 
     // Handle clicking on a link to go to the next article
     const handleLinkClick = (linkTitle: string) => {
@@ -127,10 +123,21 @@ const WikiGame: React.FC = () => {
                         {randomArticle ? (
                             <div>
                                 <h2 className="text-xl font-bold">{randomArticle.title}</h2>
-                                <div
-                                    className="article-content"
-                                    dangerouslySetInnerHTML={{ __html: randomArticle.content }} // Render parsed HTML
-                                />
+                                <div className="main-content">
+                                    <div
+                                        className="article-content"
+                                        dangerouslySetInnerHTML={{ __html: randomArticle.content }} // Render parsed HTML
+                                    />
+                                    {randomArticle.infobox && (
+                                        <div className="infobox-container">
+                                            <h3 className="text-lg font-semibold">Infobox:</h3>
+                                            <div
+                                                className="infobox-content"
+                                                dangerouslySetInnerHTML={{ __html: randomArticle.infobox }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                                 <a
                                     href={randomArticle.url}
                                     target="_blank"
