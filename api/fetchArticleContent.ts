@@ -1,4 +1,5 @@
-import fetch from 'node-fetch'; 
+import fetch from 'node-fetch';
+import * as cheerio from 'cheerio';
 
 
 export default async function handler(req, res) {
@@ -17,8 +18,7 @@ export default async function handler(req, res) {
 
     try {
         const wikipediaApiUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(title)}&prop=text&format=json&origin=*`;
-        console.log("Combined URL");
-        console.log(wikipediaApiUrl);
+
         const response = await fetch(wikipediaApiUrl);
         const data = await response.json();
 
@@ -28,12 +28,25 @@ export default async function handler(req, res) {
 
         const pageHtml = data.parse.text['*']; // Raw HTML content
 
-        // Send raw HTML as response
-        res.setHeader("Content-Type", "text/html");
-        res.status(200).send(pageHtml);
+        // Parse HTML with cheerio
+        const $ = cheerio.load(pageHtml);
+
+        // Extract infobox
+        const infoboxHtml = $('.infobox').html() || '';
+        // Remove the infobox from the main content (so it doesn’t show twice)
+        $('.infobox').remove();
+
+        // Get the remaining article content
+        const articleHtml = $('body').html();
+
+
+        // Return structured data
+        res.status(200).json({
+            content: articleHtml, 
+            infobox: infoboxHtml
+        });
     } catch (error) {
         console.error("Error fetching full article content:", error);
-        res.status(500).send("<p>Error fetching article content from Wikipedia</p>");
+        res.status(500).json({ error: "Error fetching article content from Wikipedia" });
     }
 }
-  

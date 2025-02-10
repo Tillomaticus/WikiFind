@@ -12,10 +12,11 @@
     border-radius: 8px;
 }
 
+
 .sidebar {
     position: fixed;
     top: 10%;
-    right: 10px;
+    left: 10px;
     width: 250px;
     padding: 10px;
     background-color: #fff;
@@ -32,4 +33,28 @@
 
 .sidebar p {
     margin: 4px 0;
+}
+
+.article-container {
+    display: flex;
+    gap: 20px; /* Adds space between the infobox and article */
+}
+
+.infobox-container {
+    width: 270px;
+    min-width: 270px;
+    background-color: #f8f9fa;
+    border: 1px solid #a2a9b1;
+    padding: 10px;
+    font-size: 14px;
+    box-sizing: border-box; /* Ensures padding doesn't affect width */
+}
+
+.infobox-content {
+    padding: 10px;
+}
+.article-content {
+    flex-grow: 1;
+    max-width: 800px;
+    padding-right: 20px; /* Ensure space between article content and infobox */
 }
