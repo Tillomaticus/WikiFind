@@ -10,6 +10,9 @@
     padding: 10px;
     background-color: #f9f9f9;
     border-radius: 8px;
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
 }
 
 
@@ -23,7 +26,7 @@
     border: 1px solid #ccc;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    display: block; 
+    display: block;
     z-index: 10;
 }
 
@@ -37,8 +40,9 @@
 
 .article-container {
     display: flex;
-    gap: 20px; /* Adds space between the infobox and article */
+    gap: 20px;
 }
+
 
 .infobox-container {
     width: 270px;
@@ -47,14 +51,24 @@
     border: 1px solid #a2a9b1;
     padding: 10px;
     font-size: 14px;
-    box-sizing: border-box; /* Ensures padding doesn't affect width */
+    box-sizing: border-box;
+    margin-left: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+    position: sticky; 
+    top: 10px;       
+    align-self: flex-start; 
 }
 
 .infobox-content {
     padding: 10px;
+    word-wrap: break-word;
 }
+
 .article-content {
     flex-grow: 1;
     max-width: 800px;
-    padding-right: 20px; /* Ensure space between article content and infobox */
+    text-align: justify;
+    margin: 0 auto;
+    text-align: center;
 }

@@ -35,7 +35,7 @@ const WikiGame: React.FC = () => {
                 const parsedContent = await fetchContentFromWikipedia(data.title) || { content: "", infobox: "" };
 
 
-                console.log("Infobox: " + parsedContent.infobox);
+
                 setRandomArticle({
                     title: data.title,
                     content: parsedContent.content,
@@ -44,7 +44,7 @@ const WikiGame: React.FC = () => {
                     links: data.links || [],
                 });
 
-                // Set a random goal article when the game starts
+                // Set a random goal article when the game starts //TODO need to move this to only game start
                 setGoalArticle(data.title);
             } catch (error) {
                 console.error('Error fetching random article:', error);
@@ -61,48 +61,16 @@ const WikiGame: React.FC = () => {
             const response = await fetch(`/api/fetchArticleContent?title=${encodeURIComponent(articleTitle)}`);
             const data = await response.json(); // Get raw HTML response
 
-            console.log("json " + data.content);
+            // Since the backend already parses the content, no need to parse it again
+            const contentDiv = data.content; // Use the content directly from the response
+            const infoboxHtml = data.infobox || ""; // Get the infobox HTML (it is already extracted in the backend)
 
-
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(data.content, "text/html");
-
-            console.log("doc " + doc.textContent);
-
-
-            // Wikipedia content is wrapped inside a <div> with class "mw-parser-output"
-            const contentDiv = doc.querySelector(".mw-parser-output");
-            // Extract infobox seperately
-            const infoboxDiv = doc.querySelector(".infobox");
-
-
-            if (!contentDiv) {
-                throw new Error("Failed to extract article content");
-            }
-
-
-            console.log("ibdiv " + infoboxDiv);
-
-            let infoboxHtml = "";
-            if (infoboxDiv) {
-                infoboxHtml = infoboxDiv.outerHTML; // Store infobox HTML separately
-                infoboxDiv.remove(); // Remove infobox from the main content
-            }
-
-            // Remove unnecessary elements from the main content
-            contentDiv.querySelectorAll(".hatnote, .mw-editsection, .reference, .navbox, .toc, .vertical-navbox").forEach(el => el.remove());
-
-            // Convert relative Wikipedia links to absolute
-            contentDiv.querySelectorAll("a").forEach(a => {
-                const href = a.getAttribute("href");
-                if (href && href.startsWith("/wiki/")) {
-                    a.setAttribute("href", `https://en.wikipedia.org${href}`);
-                    a.setAttribute("target", "_blank"); // Open in a new tab
-                }
-            });
+            // Update state with the raw content and infobox HTML
+            setArticleContent(contentDiv); // Set the article content as it is
+            setInfoboxContent(infoboxHtml); // Set the infobox HTML
 
             return {
-                content: contentDiv.innerHTML,
+                content: contentDiv,
                 infobox: infoboxHtml
             };
         } catch (error) {

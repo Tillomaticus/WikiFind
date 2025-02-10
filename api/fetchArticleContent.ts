@@ -22,6 +22,8 @@ export default async function handler(req, res) {
         const response = await fetch(wikipediaApiUrl);
         const data = await response.json();
 
+
+        console.log("in handler");
         if (!data.parse || !data.parse.text) {
             return res.status(404).json({ error: "Article not found" });
         }
@@ -39,6 +41,7 @@ export default async function handler(req, res) {
         // Get the remaining article content
         const articleHtml = $('body').html();
 
+        console.log("fetching ib " + infoboxHtml);
 
         // Return structured data
         res.status(200).json({
